@@ -2,9 +2,11 @@
 
 *Turn any static HTML page into something you can click and edit in your browser or send to someone to make edits and feedback on.*
 
-I kept building HTML mockups, handing them to people who don't write code, and then watching them try to edit the text by… just not being able to. So I made this.
-
 Change the words, swap the images, stick a note on it, download the clean version. No VSCode, no accounts, no build step, no "wait what's a terminal."
+
+![The html-live-edit toolbar dropped onto a real site](demo.png)
+
+*The toolbar (top-right) added straight onto a live page — nothing in the code was touched.*
 
 ## What you can do
 
