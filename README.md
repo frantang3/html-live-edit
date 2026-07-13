@@ -4,7 +4,7 @@
 
 Change the words, swap the images, stick a note on it, download the clean version. No VSCode, no accounts, no build step, no "wait what's a terminal."
 
-![The html-live-edit toolbar dropped onto a real site](demo.png)
+![The html-live-edit toolbar dropped onto a real site](editor-demo.png)
 
 *The toolbar (top-right) added straight onto a live page — nothing in the code was touched.*
 
