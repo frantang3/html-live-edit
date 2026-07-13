@@ -1,14 +1,14 @@
 # html-live-edit
 
-*Hand a webpage to someone who doesn't code and let them actually change it.* 🩷
+*Turn any static HTML page into something you can click and edit in your browser or send to someone to make edits and feedback on.*
 
 I kept building HTML mockups, handing them to people who don't write code, and then watching them try to edit the text by… just not being able to. So I made this.
 
-It turns any static HTML page into something you can click and edit right in your browser — change the words, swap the images, stick a note on it, then download the clean version. No VSCode, no accounts, no build step, no "wait what's a terminal."
+Change the words, swap the images, stick a note on it, download the clean version. No VSCode, no accounts, no build step, no "wait what's a terminal."
 
-## What it actually does
+## What you can do
 
-You paste one file into your page and a little toolbar shows up in the corner:
+A little toolbar shows up in the corner:
 
 - **Edit text** — click any text and type. Like a doc. The design stays put.
 - **Swap image** — click a placeholder, pick a photo (it gets baked into the file so it travels with it).
@@ -16,17 +16,17 @@ You paste one file into your page and a little toolbar shows up in the corner:
 - **Save copy** — keeps the editor on so you can keep fiddling later.
 - **Export clean** — spits out the real production file with all the editing bits stripped back out.
 
-## How to use it (no coding, promise)
+## Use it as a skill (Claude Code / Cursor / Codex)
+
+Drop this folder into your skills folder — for Claude Code that's `~/.claude/skills/html-live-edit/` — then just say *"make this editable."* The agent grabs the toolkit, drops it into your page, and hands you back something you can edit. Done.
+
+## No LLM? Do it by hand
 
 1. Open your HTML file.
 2. Copy everything in [`editor-kit.html`](editor-kit.html) and paste it right before `</body>`.
 3. Open the page in a browser. Toolbar's in the corner. Go nuts.
 
-That's the whole thing. It auto-tags the text and images when the page loads, so you don't have to mark anything up by hand.
-
-### Or use it as a skill
-
-If you live in Claude Code / Cursor / Codex, drop this folder into your skills folder (`~/.claude/skills/html-live-edit/`) and just say *"make this editable."* It'll do the pasting for you.
+That's the whole thing — it auto-tags the text and images when the page loads, so you don't have to mark anything up by hand.
 
 ## The fine print (a.k.a. what it won't do)
 
@@ -38,4 +38,6 @@ If you live in Claude Code / Cursor / Codex, drop this folder into your skills f
 
 MIT. Use it, remix it, ship it. A credit is nice but I'm not going to come find you.
 
-Made by Frances.
+## Who made this
+
+Made by **Frances Tang**, founder of [Small Batch Ventures](https://www.smallbatchventures.com) — where I build small, useful things and sometimes give them away. Come see what else I'm making. 🩷
