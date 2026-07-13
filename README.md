@@ -1,35 +1,41 @@
 # html-live-edit
 
-Turn any static HTML mockup into a no-code, click-to-edit page — edit text in place,
-swap placeholder images for real ones, drop sticky notes, then export a clean
-production file with the editing tools removed. No VSCode, no accounts, no build step.
+*Hand a webpage to someone who doesn't code and let them actually change it.* 🩷
 
-Built as an [agent skill](SKILL.md) (works with Claude Code, Cursor, Codex), but the
-core is a single self-contained file — `editor-kit.html` — you can paste into any page.
+I kept building HTML mockups, handing them to people who don't write code, and then watching them try to edit the text by… just not being able to. So I made this.
 
-## Quick use (no agent needed)
+It turns any static HTML page into something you can click and edit right in your browser — change the words, swap the images, stick a note on it, then download the clean version. No VSCode, no accounts, no build step, no "wait what's a terminal."
+
+## What it actually does
+
+You paste one file into your page and a little toolbar shows up in the corner:
+
+- **Edit text** — click any text and type. Like a doc. The design stays put.
+- **Swap image** — click a placeholder, pick a photo (it gets baked into the file so it travels with it).
+- **Add note** — drop a sticky note anywhere, for all the "can we make this pop??" feedback.
+- **Save copy** — keeps the editor on so you can keep fiddling later.
+- **Export clean** — spits out the real production file with all the editing bits stripped back out.
+
+## How to use it (no coding, promise)
 
 1. Open your HTML file.
-2. Paste the entire contents of [`editor-kit.html`](editor-kit.html) immediately before `</body>`.
-3. Open the page in a browser. A small toolbar appears top-right:
-   - **Edit text** — click any text and type; the design stays fixed.
-   - **Swap image** — click a placeholder/image, pick a file (embedded as a data URI).
-   - **Add note** — drop a draggable sticky note for feedback.
-   - **Save copy** — download a working copy, editor kept.
-   - **Export clean** — download the production file with all editing tools stripped out.
+2. Copy everything in [`editor-kit.html`](editor-kit.html) and paste it right before `</body>`.
+3. Open the page in a browser. Toolbar's in the corner. Go nuts.
 
-## Use as a skill
+That's the whole thing. It auto-tags the text and images when the page loads, so you don't have to mark anything up by hand.
 
-Drop this folder into `~/.claude/skills/html-live-edit/` (or your Cursor/Codex skills path).
-The agent will inject the kit and hand you an editable page on request — e.g.
-"make this editable" / "let me edit this in the browser."
+### Or use it as a skill
 
-## Notes & limits
+If you live in Claude Code / Cursor / Codex, drop this folder into your skills folder (`~/.claude/skills/html-live-edit/`) and just say *"make this editable."* It'll do the pasting for you.
 
-- **Text and images only** — it does not move sections or restyle layout.
-- Swapped images are embedded as base64, so the file is portable but grows with large images.
-- "Export clean" removes the kit, not your other work.
+## The fine print (a.k.a. what it won't do)
+
+- **Text and images only.** It won't move sections around or restyle things — that's still a real-code job.
+- **Swapped images get embedded as base64**, so the file travels anywhere but gets a little chunky with big images. Totally fine for mockups; optimize before it goes live.
+- **"Export clean" removes the editor, not your other work.**
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. Use it, remix it, ship it. A credit is nice but I'm not going to come find you.
+
+Made by Frances.
