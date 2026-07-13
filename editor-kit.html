@@ -1,0 +1,165 @@
+<!-- ===================== EDITOR KIT :: START =====================
+     Working tool for editing an HTML mockup in the browser with no code.
+     Paste this whole block immediately before </body>.
+     Buttons appear top-right: Edit text / Swap image / Add note / Save copy / Export clean.
+     "Export clean" strips this kit + notes for the production version.
+     Auto-tags text and image placeholders on load, so it works on any page.
+====================================================================== -->
+<style id="editorKitStyle">
+  #ek-bar{position:fixed;top:14px;right:14px;z-index:2147483000;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;
+    font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:min(96vw,560px)}
+  #ek-bar button{font:inherit;font-size:12.5px;letter-spacing:.02em;border:1px solid #1a281f;background:#f9f6f2;color:#1a281f;
+    padding:.5em .85em;border-radius:999px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.18);line-height:1;white-space:nowrap}
+  #ek-bar button.on{background:#1a281f;color:#f9f6f2}
+  #ek-hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:2147483000;background:#1a281f;color:#f9f6f2;
+    font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;padding:.6em 1.1em;border-radius:999px;
+    box-shadow:0 2px 12px rgba(0,0,0,.25);display:none;max-width:92vw;text-align:center}
+  body.ek-mode-text [data-ek-text]{outline:1px dashed rgba(168,178,162,.6);outline-offset:5px;border-radius:2px}
+  body.ek-mode-text [data-ek-text]:focus{outline:2px dashed #a8b2a2}
+  body.ek-mode-img [data-ek-img]{outline:2px dashed #a8b2a2;outline-offset:3px;cursor:pointer}
+  body.ek-mode-note{cursor:crosshair}
+  .ek-note{position:absolute;z-index:2147483000;min-width:130px;max-width:230px;background:#f4e9c8;color:#4a403a;
+    font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;line-height:1.4;padding:24px 10px 10px;
+    border-radius:4px;box-shadow:0 5px 16px rgba(0,0,0,.24)}
+  .ek-note-body{outline:none;min-height:1.2em}
+  .ek-note .ek-note-x{position:absolute;top:2px;right:7px;cursor:pointer;opacity:.55;font-size:15px}
+  .ek-note .ek-note-x:hover{opacity:1}
+  .ek-note .ek-note-drag{position:absolute;top:4px;left:7px;cursor:move;opacity:.5;font-size:12px}
+  @media print{#ek-bar,#ek-hint,.ek-note{display:none!important}}
+</style>
+
+<div id="ek-bar">
+  <button id="ek-text-btn" type="button">Edit text</button>
+  <button id="ek-img-btn" type="button">Swap image</button>
+  <button id="ek-note-btn" type="button">Add note</button>
+  <button id="ek-save" type="button">Save copy</button>
+  <button id="ek-export" type="button">Export clean</button>
+</div>
+<div id="ek-hint"></div>
+<input id="ek-file" type="file" accept="image/*" style="display:none">
+
+<script id="editorKitScript">
+(function(){
+  var body=document.body, mode=null, imgTarget=null;
+  var hint=document.getElementById('ek-hint');
+  var fileInput=document.getElementById('ek-file');
+  var BLOCK='h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,td,th,dd,dt';
+
+  function inChrome(el){return el.closest('#ek-bar')||el.closest('#ek-hint')||el.closest('.ek-note')}
+  function tagText(el){if(!inChrome(el))el.setAttribute('data-ek-text','')}
+
+  // Auto-tag editable text: block containers, then leaf spans/divs not already covered.
+  document.querySelectorAll(BLOCK).forEach(tagText);
+  document.querySelectorAll('span,a,b,em,strong,small,div').forEach(function(el){
+    if(inChrome(el))return;
+    if(el.closest('[data-ek-text]'))return;
+    if(el.querySelector(BLOCK+',span,a'))return;   // it's a container; its children handle editing
+    if(!el.textContent.trim())return;
+    tagText(el);
+  });
+  // Auto-tag swappable images: real images, explicit markers, and common placeholder blocks.
+  document.querySelectorAll('img,[data-swap],.shot').forEach(function(el){
+    if(!inChrome(el))el.setAttribute('data-ek-img','');
+  });
+
+  var txtBtn=document.getElementById('ek-text-btn');
+  var imgBtn=document.getElementById('ek-img-btn');
+  var noteBtn=document.getElementById('ek-note-btn');
+
+  function setMode(m){
+    mode=(mode===m)?null:m;
+    body.classList.toggle('ek-mode-text',mode==='text');
+    body.classList.toggle('ek-mode-img',mode==='img');
+    body.classList.toggle('ek-mode-note',mode==='note');
+    document.querySelectorAll('[data-ek-text]').forEach(function(el){
+      if(mode==='text')el.setAttribute('contenteditable','true');else el.removeAttribute('contenteditable');
+    });
+    txtBtn.classList.toggle('on',mode==='text');
+    imgBtn.classList.toggle('on',mode==='img');
+    noteBtn.classList.toggle('on',mode==='note');
+    var msgs={text:'Text mode: click any words and type.',
+              img:'Image mode: click a grey block or image to replace it with your own.',
+              note:'Note mode: click anywhere to drop a note. Drag by the ✥, delete with ×.'};
+    hint.textContent=mode?msgs[mode]:'';
+    hint.style.display=mode?'block':'none';
+  }
+  txtBtn.onclick=function(){setMode('text')};
+  imgBtn.onclick=function(){setMode('img')};
+  noteBtn.onclick=function(){setMode('note')};
+
+  // IMAGE SWAP (capture so it beats links/buttons underneath)
+  document.addEventListener('click',function(e){
+    if(mode!=='img')return;
+    var t=e.target.closest('[data-ek-img]');
+    if(!t||inChrome(t))return;
+    e.preventDefault();e.stopPropagation();
+    imgTarget=t;fileInput.value='';fileInput.click();
+  },true);
+  fileInput.addEventListener('change',function(){
+    var f=fileInput.files&&fileInput.files[0];if(!f||!imgTarget)return;
+    var r=new FileReader();
+    r.onload=function(){
+      var url=r.result;
+      if(imgTarget.tagName==='IMG'){imgTarget.src=url;}
+      else{
+        imgTarget.style.backgroundImage='url('+url+')';
+        imgTarget.style.backgroundSize='cover';
+        imgTarget.style.backgroundPosition='center';
+        imgTarget.querySelectorAll('span,.label').forEach(function(s){s.style.display='none'});
+        imgTarget.setAttribute('data-ek-hasimg','1');
+      }
+    };
+    r.readAsDataURL(f);
+  });
+
+  // STICKY NOTES
+  body.addEventListener('click',function(e){
+    if(mode!=='note')return;
+    if(e.target.closest('.ek-note')||inChrome(e.target))return;
+    addNote(e.pageX,e.pageY,'');
+  });
+  function addNote(x,y,text){
+    var n=document.createElement('div');
+    n.className='ek-note';n.style.left=x+'px';n.style.top=y+'px';
+    n.innerHTML='<span class="ek-note-drag" title="drag">✥</span><span class="ek-note-x" title="delete">×</span><div class="ek-note-body" contenteditable="true"></div>';
+    n.querySelector('.ek-note-body').textContent=text||'';
+    body.appendChild(n);
+    n.querySelector('.ek-note-body').focus();
+    n.querySelector('.ek-note-x').onclick=function(){n.remove()};
+    dragify(n,n.querySelector('.ek-note-drag'));
+  }
+  function dragify(el,handle){
+    handle.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      var sx=e.clientX,sy=e.clientY,ox=parseInt(el.style.left)||0,oy=parseInt(el.style.top)||0;
+      function mv(ev){el.style.left=(ox+ev.clientX-sx)+'px';el.style.top=(oy+ev.clientY-sy)+'px';}
+      function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+      document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+    });
+  }
+
+  // SAVE / EXPORT
+  function download(name,cleaned){
+    setMode(null);
+    var clone=document.documentElement.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){el.removeAttribute('contenteditable')});
+    var cb=clone.querySelector('body');if(cb)cb.classList.remove('ek-mode-text','ek-mode-img','ek-mode-note');
+    if(cleaned){
+      ['#ek-bar','#ek-hint','#ek-file','#editorKitStyle','#editorKitScript'].forEach(function(sel){
+        var n=clone.querySelector(sel);if(n)n.remove();
+      });
+      clone.querySelectorAll('.ek-note').forEach(function(n){n.remove()});
+      clone.querySelectorAll('[data-ek-text],[data-ek-img],[data-ek-hasimg]').forEach(function(el){
+        el.removeAttribute('data-ek-text');el.removeAttribute('data-ek-img');el.removeAttribute('data-ek-hasimg');
+      });
+      // remove the kit's own start/end comment markers if present
+    }
+    var blob=new Blob(['<!doctype html>\n'+clone.outerHTML],{type:'text/html'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+    document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(a.href)},1000);
+  }
+  document.getElementById('ek-save').onclick=function(){download('mockup-working.html',false)};
+  document.getElementById('ek-export').onclick=function(){download('mockup-final.html',true)};
+})();
+</script>
+<!-- ===================== EDITOR KIT :: END ===================== -->
