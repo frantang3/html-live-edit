@@ -1,19 +1,24 @@
 <!-- ===================== EDITOR KIT :: START =====================
      Working tool for editing an HTML mockup in the browser with no code.
      Paste this whole block immediately before </body>.
-     Buttons appear top-right: Edit text / Swap image / Add note / Save copy / Export clean.
-     "Export clean" strips this kit + notes for the production version.
+     Buttons top-right: Edit text / Swap image / Add note / Save changes / Download final.
+     Save is protected: Cmd/Ctrl+S saves correctly, and closing with unsaved edits warns.
+     "Download final" strips this kit + notes for the production version.
      Auto-tags text and image placeholders on load, so it works on any page.
 ====================================================================== -->
 <style id="editorKitStyle">
   #ek-bar{position:fixed;top:14px;right:14px;z-index:2147483000;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;
-    font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:min(96vw,560px)}
+    font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:min(96vw,620px)}
   #ek-bar button{font:inherit;font-size:12.5px;letter-spacing:.02em;border:1px solid #1a281f;background:#f9f6f2;color:#1a281f;
     padding:.5em .85em;border-radius:999px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.18);line-height:1;white-space:nowrap}
   #ek-bar button.on{background:#1a281f;color:#f9f6f2}
-  #ek-hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:2147483000;background:#1a281f;color:#f9f6f2;
+  #ek-bar #ek-save{background:#1a281f;color:#f9f6f2;border-color:#1a281f}
+  #ek-bar #ek-save.dirty{background:#a86b2b;border-color:#a86b2b}
+  #ek-hint,#ek-toast{position:fixed;left:50%;transform:translateX(-50%);z-index:2147483000;background:#1a281f;color:#f9f6f2;
     font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;padding:.6em 1.1em;border-radius:999px;
     box-shadow:0 2px 12px rgba(0,0,0,.25);display:none;max-width:92vw;text-align:center}
+  #ek-hint{bottom:14px}
+  #ek-toast{top:62px}
   body.ek-mode-text [data-ek-text]{outline:1px dashed rgba(168,178,162,.6);outline-offset:5px;border-radius:2px}
   body.ek-mode-text [data-ek-text]:focus{outline:2px dashed #a8b2a2}
   body.ek-mode-img [data-ek-img]{outline:2px dashed #a8b2a2;outline-offset:3px;cursor:pointer}
@@ -25,39 +30,42 @@
   .ek-note .ek-note-x{position:absolute;top:2px;right:7px;cursor:pointer;opacity:.55;font-size:15px}
   .ek-note .ek-note-x:hover{opacity:1}
   .ek-note .ek-note-drag{position:absolute;top:4px;left:7px;cursor:move;opacity:.5;font-size:12px}
-  @media print{#ek-bar,#ek-hint,.ek-note{display:none!important}}
+  @media print{#ek-bar,#ek-hint,#ek-toast,.ek-note{display:none!important}}
 </style>
 
 <div id="ek-bar">
   <button id="ek-text-btn" type="button">Edit text</button>
   <button id="ek-img-btn" type="button">Swap image</button>
   <button id="ek-note-btn" type="button">Add note</button>
-  <button id="ek-save" type="button">Save copy</button>
-  <button id="ek-export" type="button">Export clean</button>
+  <button id="ek-save" type="button">Save changes</button>
+  <button id="ek-export" type="button">Download final</button>
 </div>
 <div id="ek-hint"></div>
+<div id="ek-toast"></div>
 <input id="ek-file" type="file" accept="image/*" style="display:none">
 
 <script id="editorKitScript">
 (function(){
-  var body=document.body, mode=null, imgTarget=null;
+  var body=document.body, mode=null, imgTarget=null, dirty=false;
   var hint=document.getElementById('ek-hint');
+  var toastEl=document.getElementById('ek-toast');
   var fileInput=document.getElementById('ek-file');
+  var saveBtn=document.getElementById('ek-save');
   var BLOCK='h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,td,th,dd,dt';
+  var isMac=navigator.platform.toUpperCase().indexOf('MAC')>-1;
+  var saveKey=isMac?'Cmd+S':'Ctrl+S';
 
-  function inChrome(el){return el.closest('#ek-bar')||el.closest('#ek-hint')||el.closest('.ek-note')}
+  function inChrome(el){return el.closest('#ek-bar')||el.closest('#ek-hint')||el.closest('#ek-toast')||el.closest('.ek-note')}
   function tagText(el){if(!inChrome(el))el.setAttribute('data-ek-text','')}
 
-  // Auto-tag editable text: block containers, then leaf spans/divs not already covered.
   document.querySelectorAll(BLOCK).forEach(tagText);
   document.querySelectorAll('span,a,b,em,strong,small,div').forEach(function(el){
     if(inChrome(el))return;
     if(el.closest('[data-ek-text]'))return;
-    if(el.querySelector(BLOCK+',span,a'))return;   // it's a container; its children handle editing
+    if(el.querySelector(BLOCK+',span,a'))return;
     if(!el.textContent.trim())return;
     tagText(el);
   });
-  // Auto-tag swappable images: real images, explicit markers, and common placeholder blocks.
   document.querySelectorAll('img,[data-swap],.shot').forEach(function(el){
     if(!inChrome(el))el.setAttribute('data-ek-img','');
   });
@@ -65,6 +73,15 @@
   var txtBtn=document.getElementById('ek-text-btn');
   var imgBtn=document.getElementById('ek-img-btn');
   var noteBtn=document.getElementById('ek-note-btn');
+
+  var toastTimer=null;
+  function toast(msg,ms){
+    toastEl.textContent=msg;toastEl.style.display='block';
+    if(toastTimer)clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){toastEl.style.display='none'},ms||5000);
+  }
+  function markDirty(){if(dirty)return;dirty=true;saveBtn.classList.add('dirty');saveBtn.textContent='Save changes •';}
+  function clearDirty(){dirty=false;saveBtn.classList.remove('dirty');saveBtn.textContent='Save changes';}
 
   function setMode(m){
     mode=(mode===m)?null:m;
@@ -79,7 +96,7 @@
     noteBtn.classList.toggle('on',mode==='note');
     var msgs={text:'Text mode: click any words and type.',
               img:'Image mode: click a grey block or image to replace it with your own.',
-              note:'Note mode: click anywhere to drop a note. Drag by the ✥, delete with ×.'};
+              note:'Note mode: click anywhere to drop a note. Drag by the handle, delete with the x.'};
     hint.textContent=mode?msgs[mode]:'';
     hint.style.display=mode?'block':'none';
   }
@@ -87,7 +104,14 @@
   imgBtn.onclick=function(){setMode('img')};
   noteBtn.onclick=function(){setMode('note')};
 
-  // IMAGE SWAP (capture so it beats links/buttons underneath)
+  // keep edits from being lost
+  document.addEventListener('input',function(e){if(e.target.closest('[data-ek-text],.ek-note-body'))markDirty();});
+  document.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&(e.key==='s'||e.key==='S')){e.preventDefault();download('mockup-working.html',false);}
+  });
+  window.addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();e.returnValue='';}});
+
+  // IMAGE SWAP
   document.addEventListener('click',function(e){
     if(mode!=='img')return;
     var t=e.target.closest('[data-ek-img]');
@@ -108,6 +132,7 @@
         imgTarget.querySelectorAll('span,.label').forEach(function(s){s.style.display='none'});
         imgTarget.setAttribute('data-ek-hasimg','1');
       }
+      markDirty();
     };
     r.readAsDataURL(f);
   });
@@ -121,45 +146,50 @@
   function addNote(x,y,text){
     var n=document.createElement('div');
     n.className='ek-note';n.style.left=x+'px';n.style.top=y+'px';
-    n.innerHTML='<span class="ek-note-drag" title="drag">✥</span><span class="ek-note-x" title="delete">×</span><div class="ek-note-body" contenteditable="true"></div>';
+    n.innerHTML='<span class="ek-note-drag" title="drag">&#10021;</span><span class="ek-note-x" title="delete">&times;</span><div class="ek-note-body" contenteditable="true"></div>';
     n.querySelector('.ek-note-body').textContent=text||'';
     body.appendChild(n);
     n.querySelector('.ek-note-body').focus();
-    n.querySelector('.ek-note-x').onclick=function(){n.remove()};
+    n.querySelector('.ek-note-x').onclick=function(){n.remove();markDirty();};
     dragify(n,n.querySelector('.ek-note-drag'));
+    markDirty();
   }
   function dragify(el,handle){
     handle.addEventListener('mousedown',function(e){
       e.preventDefault();
       var sx=e.clientX,sy=e.clientY,ox=parseInt(el.style.left)||0,oy=parseInt(el.style.top)||0;
       function mv(ev){el.style.left=(ox+ev.clientX-sx)+'px';el.style.top=(oy+ev.clientY-sy)+'px';}
-      function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+      function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);markDirty();}
       document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
     });
   }
 
-  // SAVE / EXPORT
+  // SAVE / DOWNLOAD
   function download(name,cleaned){
     setMode(null);
     var clone=document.documentElement.cloneNode(true);
     clone.querySelectorAll('[contenteditable]').forEach(function(el){el.removeAttribute('contenteditable')});
     var cb=clone.querySelector('body');if(cb)cb.classList.remove('ek-mode-text','ek-mode-img','ek-mode-note');
     if(cleaned){
-      ['#ek-bar','#ek-hint','#ek-file','#editorKitStyle','#editorKitScript'].forEach(function(sel){
+      ['#ek-bar','#ek-hint','#ek-toast','#ek-file','#editorKitStyle','#editorKitScript'].forEach(function(sel){
         var n=clone.querySelector(sel);if(n)n.remove();
       });
       clone.querySelectorAll('.ek-note').forEach(function(n){n.remove()});
       clone.querySelectorAll('[data-ek-text],[data-ek-img],[data-ek-hasimg]').forEach(function(el){
         el.removeAttribute('data-ek-text');el.removeAttribute('data-ek-img');el.removeAttribute('data-ek-hasimg');
       });
-      // remove the kit's own start/end comment markers if present
     }
     var blob=new Blob(['<!doctype html>\n'+clone.outerHTML],{type:'text/html'});
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
     document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(a.href)},1000);
+    clearDirty();
+    toast('Saved to your Downloads as ' + name + '. Send that file back to keep your changes.',7000);
   }
-  document.getElementById('ek-save').onclick=function(){download('mockup-working.html',false)};
+  saveBtn.onclick=function(){download('mockup-working.html',false)};
   document.getElementById('ek-export').onclick=function(){download('mockup-final.html',true)};
+
+  // one-time orientation
+  toast('Click Edit text to change words, then Save changes (or press ' + saveKey + '). Edits are only kept when you save here.',8000);
 })();
 </script>
 <!-- ===================== EDITOR KIT :: END ===================== -->

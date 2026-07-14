@@ -4,7 +4,7 @@
 
 Change the words, swap the images, stick a note on it, download the clean version. No VSCode, no accounts, no build step, no "wait what's a terminal."
 
-![The html-live-edit toolbar dropped onto a real site](editor-demo.png)
+![The html-live-edit toolbar dropped onto a real site](preview.png)
 
 *The toolbar (top-right) added straight onto a live page — nothing in the code was touched.*
 
@@ -15,8 +15,8 @@ A little toolbar shows up in the corner:
 - **Edit text** — click any text and type. Like a doc. The design stays put.
 - **Swap image** — click a placeholder, pick a photo (it gets baked into the file so it travels with it).
 - **Add note** — drop a sticky note anywhere, for all the "can we make this pop??" feedback.
-- **Save copy** — keeps the editor on so you can keep fiddling later.
-- **Export clean** — spits out the real production file with all the editing bits stripped back out.
+- **Save changes** — downloads your edited copy and keeps the editor on so you can keep going. Also works with **Ctrl/Cmd+S** (so the reflex "save" grabs your edits, not a blank page), and it warns you before you close with anything unsaved.
+- **Download final** — spits out the real production file with all the editing bits stripped back out.
 
 ## Use it as a skill (Claude Code / Cursor / Codex)
 
@@ -34,7 +34,7 @@ That's the whole thing — it auto-tags the text and images when the page loads,
 
 - **Text and images only.** It won't move sections around or restyle things — that's still a real-code job.
 - **Swapped images get embedded as base64**, so the file travels anywhere but gets a little chunky with big images. Totally fine for mockups; optimize before it goes live.
-- **"Export clean" removes the editor, not your other work.**
+- **"Download final" removes the editor, not your other work.**
 
 ## License
 

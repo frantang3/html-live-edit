@@ -50,14 +50,18 @@ loads, so it works on any HTML without you hand-marking elements.
 - **Swap image** - click a grey placeholder or image, pick a file; it is embedded as a
   data URI so it travels inside the file.
 - **Add note** - click anywhere to drop a draggable sticky note (for feedback/questions).
-- **Save copy** - downloads `mockup-working.html`, keeps the editor so they can keep
-  editing later.
-- **Export clean** - downloads `mockup-final.html` with the toolbar, notes, and all
+- **Save changes** - downloads `mockup-working.html`, keeps the editor so they can keep
+  editing later. Also bound to **Cmd/Ctrl+S**, so the reflex save works instead of the
+  browser's save (which would silently discard on-screen edits).
+- **Download final** - downloads `mockup-final.html` with the toolbar, notes, and all
   editing attributes stripped out. This is the production-facing file.
+
+Safety: the button flags unsaved edits with a dot, and closing the tab with unsaved
+edits triggers a browser warning, so changes are hard to lose.
 
 ## Getting edits back
 
-The user edits, clicks **Save copy** (to keep iterating) or **Export clean** (when
+The user edits, clicks **Save changes** (to keep iterating) or **Download final** (when
 done), and sends you the downloaded file. Commit it to their branch to stay in sync,
 or read it to pull their copy/image changes forward.
 
@@ -67,7 +71,7 @@ or read it to pull their copy/image changes forward.
   Structural changes still go through you.
 - **Swapped images are embedded as base64 data URIs.** Great for portability, but many
   large images make the file heavy. Fine for mockups; optimize before production.
-- **"Export clean" removes the kit, not other work.** For a Squarespace target you still
+- **"Download final" removes the kit, not other work.** For a Squarespace target you still
   need the separate step of inlining all styles and splitting into Code-Block-safe
   chunks (Squarespace strips `<style>`). Clean export is the prerequisite, not the whole
   conversion.
